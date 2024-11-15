@@ -1,27 +1,32 @@
-#+title: 🗄️ sqlitestdb
-#+OPTIONS: toc:nil
+sqlitestdb is a Go library that helps you write efficient SQLite-backed tests. It clones a template database to give each test a fully prepared and migrated SQLite database. Migrations are only ran once and each test gets its own database. A port of [pgtestdb](https://github.com/peterldowns/pgtestdb) to SQLite.
 
-sqlitestdb is a Go library that helps you write efficient SQLite-backed tests. It clones a template database to give each test a fully prepared and migrated SQLite database. Migrations are only ran once and each test gets its own database. A port of [[https://github.com/peterldowns/pgtestdb][pgtestdb]] to SQLite.
 
-* How It Works
-Each time you call =sqlitestdb.New= in your tests, sqlitestdb will check to see if a template database already exists. If not, it creates a new database and runs your migrations on it. Once the template exists, it then creates a test-specific database from that template.
+# How It Works
+
+Each time you call `sqlitestdb.New` in your tests, sqlitestdb will check to see if a template database already exists. If not, it creates a new database and runs your migrations on it. Once the template exists, it then creates a test-specific database from that template.
 
 Creating a new database from a template is very fast, on the order of milliseconds. And because sqlitestdb hashes your migrations to determine which template database to use, your migrations only end up being ran one time, regardless of how many tests or separate packages you have. This is true even across test runs; sqlitestdb will only run your migrations again if you change them in some way.
 
-When a test succeeds the database it used is automatically deleted. When a test fails, the database it created is left behind, and test logs will indicate a SQLite URI you can use to open with =sqlite3= and explore what happened.
+When a test succeeds the database it used is automatically deleted. When a test fails, the database it created is left behind, and test logs will indicate a SQLite URI you can use to open with `sqlite3` and explore what happened.
 
 sqlitestdb is concurrency-safe, because each of your test gets its own database, you can and should run your tests in parallel.
 
-* Install
-#+BEGIN_SRC shell
+
+# Install
+
+```shell
 go get github.com/terinjokes/sqlitestdb@latest
-#+END_SRC
+```
 
-* Quickstart
-** Example Test
-Here's how to use =sqlitestdb.New= in a test to get a database.
 
-#+BEGIN_SRC go :tangle example_new_test.go :comments link
+# Quickstart
+
+
+## Example Test
+
+Here&rsquo;s how to use `sqlitestdb.New` in a test to get a database.
+
+```go
 package sqlitestdb_test
 
 // sqlitestdb uses the "database/sql" interface to interact with SQLite, you
@@ -57,12 +62,14 @@ func testNew(t *testing.T) {
 		t.Fatalf("expected message to be 'hellord!'")
 	}
 }
-#+END_SRC
+```
 
-** Defining a Test Helper
-The above example as a bit of boilerplate, you can define a test helper that calls =sqlitestdb.New= with the same settings and =sqlitestdb.Migrator= each time.
 
-#+BEGIN_SRC go
+## Defining a Test Helper
+
+The above example as a bit of boilerplate, you can define a test helper that calls `sqlitestdb.New` with the same settings and `sqlitestdb.Migrator` each time.
+
+```go
 func NewDB(t *testing.T) *sql.DB {
 	t.Helper()
 	conf := sqlitestdb.Config{Driver: "sqlite3"}
@@ -70,11 +77,11 @@ func NewDB(t *testing.T) *sql.DB {
 
 	return sqlitestdb.New(t, conf, migrator)
 }
-#+END_SRC
+```
 
-Your test can then call the helper to get a valid =*sql.DB=.
+Your test can then call the helper to get a valid `*sql.DB`.
 
-#+BEGIN_SRC go
+```go
 func TestExample(t *testing.T) {
 	t.Parallel()
 	db := NewDB(t)
@@ -89,19 +96,19 @@ func TestExample(t *testing.T) {
 		t.Fatalf("expected message to be 'hellord!'")
 	}
 }
-#+END_SRC
+```
 
-** Choosing a Driver
-As part of creating, migrating, and cloning for a new test database, sqlitestdb will need to use a SQLite implementation via the "database/sql" interface. In order to do so you must choose, register, and pass the name of your SQL driver. sqlitestdb is tested against [[https://github.com/mattn/go-sqlite3][go-sqlite3]], [[https://modernc.org/sqlite][sqlite]], and [[https://github.com/tursodatabase/go-libsql][libsql]]. Other database/sql drivers for SQLite-like things may work.
 
-#+BEGIN_COMMENT
-Say "SQLite-like" five times fast.
-#+END_COMMENT
+## Choosing a Driver
 
-** Using another database adapter
-You can still use sqlitestdb even if you don't use the "database/sql" interface, such as if you're using an ORM-like database access layer, by calling =sqlitestdb.Custom=. You still need to register a driver for "database/sql" for sqlitestdb's internal behavior.
+As part of creating, migrating, and cloning for a new test database, sqlitestdb will need to use a SQLite implementation via the &ldquo;database/sql&rdquo; interface. In order to do so you must choose, register, and pass the name of your SQL driver. sqlitestdb is tested against [go-sqlite3](https://github.com/mattn/go-sqlite3), [sqlite](https://modernc.org/sqlite), and [libsql](https://github.com/tursodatabase/go-libsql). Other database/sql drivers for SQLite-like things may work.
 
-#+BEGIN_SRC go :tangle example_custom_test.go :comments link
+
+## Using another database adapter
+
+You can still use sqlitestdb even if you don&rsquo;t use the &ldquo;database/sql&rdquo; interface, such as if you&rsquo;re using an ORM-like database access layer, by calling `sqlitestdb.Custom`. You still need to register a driver for &ldquo;database/sql&rdquo; for sqlitestdb&rsquo;s internal behavior.
+
+```go
 package sqlitestdb_test
 
 import (
@@ -133,4 +140,4 @@ func testCustom(t *testing.T) {
 		t.Fatalf("expected message to be 'hellord!'")
 	}
 }
-#+END_SRC
+```

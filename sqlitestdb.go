@@ -38,7 +38,7 @@ type Config struct {
 //
 //	"file:/path/to/database.sql?options=..."
 //
-// This should be a subset the URIs defined by [SQLite URIs], but may contain
+// This should be a subset of the URIs defined by [SQLite URIs], but may contain
 // driver-specific options.
 //
 // [SQLite URIs]: https://www.sqlite.org/uri.html
