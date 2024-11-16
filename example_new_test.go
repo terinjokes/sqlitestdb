@@ -1,4 +1,3 @@
-// [[file:README.org::*Example Test][Example Test:1]]
 package sqlitestdb_test
 
 // sqlitestdb uses the "database/sql" interface to interact with SQLite, you
@@ -11,8 +10,9 @@ import (
 	"github.com/terinjokes/sqlitestdb"
 )
 
-// testNew should be called "TestNew" in your code, but is unexported here for GoDoc.
-func testNew(t *testing.T) {
+// ExampleNew should be called "TestNew" in your code, but is renamed here for GoDoc.
+func ExampleNew() {
+	t := &testing.T{}
 	// sqlitestdb is concurrency safe, enjoy yourself, run a lot of tests at once.
 	t.Parallel()
 	// You do not need to provide a database name when calling [New] or [Custom].
@@ -34,4 +34,3 @@ func testNew(t *testing.T) {
 		t.Fatalf("expected message to be 'hellord!'")
 	}
 }
-// Example Test:1 ends here

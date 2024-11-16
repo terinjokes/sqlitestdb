@@ -1,4 +1,3 @@
-// [[file:README.org::*Using another database adapter][Using another database adapter:1]]
 package sqlitestdb_test
 
 import (
@@ -10,8 +9,10 @@ import (
 	"github.com/terinjokes/sqlitestdb"
 )
 
-// testCustom should be called "TestCustom" in your code, but is unexported here for GoDoc.
-func testCustom(t *testing.T) {
+func ExampleCustom() {
+	t := &testing.T{}
+	t.Parallel()
+
 	ctx := context.Background()
 	conf := sqlitestdb.Custom(t, sqlitestdb.Config{Driver: "sqlite3"}, sqlitestdb.NoopMigrator{})
 
@@ -30,4 +31,3 @@ func testCustom(t *testing.T) {
 		t.Fatalf("expected message to be 'hellord!'")
 	}
 }
-// Using another database adapter:1 ends here

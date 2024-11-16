@@ -39,8 +39,7 @@ import (
 	"github.com/terinjokes/sqlitestdb"
 )
 
-// testNew should be called "TestNew" in your code, but is unexported here for GoDoc.
-func testNew(t *testing.T) {
+func TestNew(t *testing.T) {
 	// sqlitestdb is concurrency safe, enjoy yourself, run a lot of tests at once.
 	t.Parallel()
 	// You do not need to provide a database name when calling [New] or [Custom].
@@ -120,8 +119,9 @@ import (
 	"github.com/terinjokes/sqlitestdb"
 )
 
-// testCustom should be called "TestCustom" in your code, but is unexported here for GoDoc.
-func testCustom(t *testing.T) {
+func TestCustom(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	conf := sqlitestdb.Custom(t, sqlitestdb.Config{Driver: "sqlite3"}, sqlitestdb.NoopMigrator{})
 

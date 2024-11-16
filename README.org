@@ -21,7 +21,7 @@ go get github.com/terinjokes/sqlitestdb@latest
 ** Example Test
 Here's how to use =sqlitestdb.New= in a test to get a database.
 
-#+BEGIN_SRC go :tangle example_new_test.go :comments link
+#+BEGIN_SRC go
 package sqlitestdb_test
 
 // sqlitestdb uses the "database/sql" interface to interact with SQLite, you
@@ -34,8 +34,7 @@ import (
 	"github.com/terinjokes/sqlitestdb"
 )
 
-// testNew should be called "TestNew" in your code, but is unexported here for GoDoc.
-func testNew(t *testing.T) {
+func TestNew(t *testing.T) {
 	// sqlitestdb is concurrency safe, enjoy yourself, run a lot of tests at once.
 	t.Parallel()
 	// You do not need to provide a database name when calling [New] or [Custom].
@@ -101,7 +100,7 @@ Say "SQLite-like" five times fast.
 ** Using another database adapter
 You can still use sqlitestdb even if you don't use the "database/sql" interface, such as if you're using an ORM-like database access layer, by calling =sqlitestdb.Custom=. You still need to register a driver for "database/sql" for sqlitestdb's internal behavior.
 
-#+BEGIN_SRC go :tangle example_custom_test.go :comments link
+#+BEGIN_SRC go
 package sqlitestdb_test
 
 import (
@@ -113,8 +112,9 @@ import (
 	"github.com/terinjokes/sqlitestdb"
 )
 
-// testCustom should be called "TestCustom" in your code, but is unexported here for GoDoc.
-func testCustom(t *testing.T) {
+func TestCustom(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	conf := sqlitestdb.Custom(t, sqlitestdb.Config{Driver: "sqlite3"}, sqlitestdb.NoopMigrator{})
 
