@@ -46,6 +46,11 @@ func TestLibSQL(t *testing.T) {
 }
 
 func defaultMigrator() sqlitestdb.Migrator {
+	// Separate the table creation and insertion into two separate steps
+	// as libsql has [a bug] where only the first statement in a
+	// [sql.DB.ExecContext] is ran.
+	//
+	// [a bug]: https://github.com/tursodatabase/go-libsql/issues/22
 	return &sqlMigrator{
 		migrations: []string{`
 			-- the "migration"
@@ -53,8 +58,10 @@ func defaultMigrator() sqlitestdb.Migrator {
 				id INTEGER PRIMARY KEY,
 				name TEXT
 			);
-			INSERT INTO cats (name) VALUES ('daisy'), ('sunny')
-        `},
+        `, `
+			INSERT INTO cats (name) VALUES ('daisy'), ('sunny');
+        `,
+		},
 	}
 }
 

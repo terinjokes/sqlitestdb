@@ -187,8 +187,16 @@ func createTemplate(ctx context.Context, config Config, migrator Migrator) (*tem
 		// Note that taking the exclusive lock requires a write, so this still allows
 		// migrations which exec another program to succeed.
 		//
+		// This uses [sql.DB.QueryRowContext] instead of [sql.DB.ExecContext] due to libsql
+		// returning an error, instead of non-nil [sql.Result], when Exec is used for any
+		// statements that return rows. See [tursodatabase/go-libsql#28].
+		//
 		// [locking-mode]: https://www.sqlite.org/pragma.html#pragma_locking_mode
-		if _, err := db.ExecContext(ctx, "PRAGMA main.locking_mode=EXCLUSIVE"); err != nil {
+		// [tursodatabase/go-libsql#28]: https://github.com/tursodatabase/go-libsql/issues/28
+		var ignored string
+		row := db.QueryRowContext(ctx, "PRAGMA main.locking_mode=EXCLUSIVE")
+		err = row.Scan(&ignored)
+		if err != nil {
 			return nil, errtrace.Wrap(err)
 		}
 
@@ -214,7 +222,7 @@ func createInstance(ctx context.Context, baseDB *sql.DB, template templateState)
 	}
 
 	testConfig := template.config
-	testConfig.Database = filepath.Join(os.TempDir(), "testdb_tpl_"+template.hash+"_inst_"+id+".sqlite")
+	testConfig.Database = filepath.Join(os.TempDir(), "sqlitestdb_tpl_"+template.hash+"_inst_"+id+".sqlite")
 
 	// Since we can be reasonably sure the template database is free of any transactions
 	// at this point, we can use the "VACUUM INTO" statement to create a new database.

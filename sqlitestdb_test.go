@@ -179,7 +179,7 @@ func defaultMigrator() sqlitestdb.Migrator {
 				id INTEGER PRIMARY KEY,
 				name TEXT
 			);
-			INSERT INTO cats (name) VALUES ('daisy'), ('sunny')
+			INSERT INTO cats (name) VALUES ('daisy'), ('sunny');
         `},
 	}
 }
