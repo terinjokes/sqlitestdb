@@ -229,8 +229,7 @@ func createInstance(ctx context.Context, baseDB *sql.DB, template templateState)
 	// This allows us to avoid the Online Backup API, which would require separate
 	// implementations for github.com/mattn/go-sqlite3 and modernc.org/sqlite, as the
 	// backup API requires acquiring the raw driver connection.
-	stmt := fmt.Sprintf(`VACUUM INTO '%s'`, testConfig.Database)
-	if _, err := baseDB.ExecContext(ctx, stmt); err != nil {
+	if _, err := baseDB.ExecContext(ctx, "VACUUM INTO ?", testConfig.URI()); err != nil {
 		return nil, errtrace.Wrap(err)
 	}
 
