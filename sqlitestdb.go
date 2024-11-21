@@ -127,8 +127,13 @@ func create(t testing.TB, config Config, migrator Migrator) (*Config, *sql.DB) {
 	if err != nil {
 		t.Fatalf("could not connect to instance database: %+v", err)
 	}
+	dbFilename := vfsDBFilename(db)
 
 	t.Cleanup(func() {
+		if dbFilename == "" {
+			dbFilename = instance.Database
+		}
+
 		if err := db.Close(); err != nil {
 			t.Fatalf("could not close instance database %q: %+v", instance.Database, err)
 		}
@@ -137,7 +142,7 @@ func create(t testing.TB, config Config, migrator Migrator) (*Config, *sql.DB) {
 			return
 		}
 
-		os.Remove(instance.Database)
+		vfsRemove(dbFilename)
 	})
 
 	return instance, db
