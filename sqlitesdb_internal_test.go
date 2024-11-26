@@ -13,7 +13,9 @@ import (
 
 func TestRemovingTemplateDatabaseOnError(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	errm := &sqlMigrator{
 		migrations: []string{
 			"SELECT x FROM nothing",

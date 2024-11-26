@@ -28,7 +28,9 @@ func New(t *testing.T) *sql.DB {
 
 func TestLibSQL(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	db := New(t)
 
 	rows, err := db.QueryContext(ctx, "SELECT name FROM cats ORDER BY name ASC")

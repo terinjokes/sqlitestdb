@@ -92,7 +92,9 @@ func Custom(t testing.TB, config Config, migrator Migrator) *Config {
 // create contains the implementation of [New] and [Custom], and is responsible
 // for actually creating the instance database to be used by a testcase.
 func create(t testing.TB, config Config, migrator Migrator) (*Config, *sql.DB) {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	tpl, err := getOrCreateTemplate(ctx, config, migrator)
 	if err != nil {
 		t.Fatalf("could not create template database: %+v", err)

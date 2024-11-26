@@ -29,7 +29,9 @@ func New(t *testing.T) *sql.DB {
 
 func TestNew(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	db := New(t)
 
 	rows, err := db.QueryContext(ctx, "SELECT name FROM cats ORDER BY name ASC")
@@ -48,7 +50,9 @@ func TestNew(t *testing.T) {
 
 func TestCustom(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	dbconf := sqlitestdb.Config{
 		Driver: "sqlite3",
 	}
@@ -72,11 +76,13 @@ func TestCustom(t *testing.T) {
 
 func TestParallel1(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 
 	for i := 0; i < 10; i++ {
 		t.Run(fmt.Sprintf("subtest_%d", i), func(t *testing.T) {
 			t.Parallel()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
 			db := New(t)
 
 			var count int
@@ -89,11 +95,13 @@ func TestParallel1(t *testing.T) {
 
 func TestParallel2(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 
 	for i := 0; i < 10; i++ {
 		t.Run(fmt.Sprintf("subtest_%d", i), func(t *testing.T) {
 			t.Parallel()
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
 			db := New(t)
 
 			var count int
@@ -106,7 +114,9 @@ func TestParallel2(t *testing.T) {
 
 func TestDifferentHashesAlwaysResultInDifferentDatabases(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	dbconf := sqlitestdb.Config{Driver: "sqlite3"}
 	// These two migrators have different hashes and they create databases with different schemas.
 	// The xxx schema contains a table xxx, the yyy schema contains a table yyy.
