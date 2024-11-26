@@ -93,7 +93,7 @@ func Custom(t testing.TB, config Config, migrator Migrator) *Config {
 // for actually creating the instance database to be used by a testcase.
 func create(t testing.TB, config Config, migrator Migrator) (*Config, *sql.DB) {
 	ctx := context.Background()
-	tpl, err := createTemplate(ctx, config, migrator)
+	tpl, err := getOrCreateTemplate(ctx, config, migrator)
 	if err != nil {
 		t.Fatalf("could not create template database: %+v", err)
 	}
@@ -152,13 +152,13 @@ type templateState struct {
 
 var templates = once.NewMap[string, templateState]()
 
-// createTemplate will get-or-create a template, synchronizing calls using the
+// getOrCreateTemplate will get-or-create a template, synchronizing calls using the
 // templates map, so that each template is get-or-created at most once.
 //
 // If there was an error during template creation an error will be returned by
 // the inner function, which will cause the error to be returned to all callers
 // during this program's execution.
-func createTemplate(ctx context.Context, config Config, migrator Migrator) (*templateState, error) {
+func getOrCreateTemplate(ctx context.Context, config Config, migrator Migrator) (*templateState, error) {
 	mhash, err := migrator.Hash()
 	if err != nil {
 		return nil, err
@@ -174,38 +174,49 @@ func createTemplate(ctx context.Context, config Config, migrator Migrator) (*tem
 			return &tpl, nil
 		}
 
-		db, err := tpl.config.Connect()
-		if err != nil {
-			return nil, errtrace.Wrap(err)
-		}
-		defer db.Close()
-
-		// As SQLite doesn't have advisory locks, the best we can do is enable
-		// exclusive [locking-mode], which will prevent reads and writes from other
-		// processes.
-		//
-		// Note that taking the exclusive lock requires a write, so this still allows
-		// migrations which exec another program to succeed.
-		//
-		// This uses [sql.DB.QueryRowContext] instead of [sql.DB.ExecContext] due to libsql
-		// returning an error, instead of non-nil [sql.Result], when Exec is used for any
-		// statements that return rows. See [tursodatabase/go-libsql#28].
-		//
-		// [locking-mode]: https://www.sqlite.org/pragma.html#pragma_locking_mode
-		// [tursodatabase/go-libsql#28]: https://github.com/tursodatabase/go-libsql/issues/28
-		var ignored string
-		row := db.QueryRowContext(ctx, "PRAGMA main.locking_mode=EXCLUSIVE")
-		err = row.Scan(&ignored)
-		if err != nil {
-			return nil, errtrace.Wrap(err)
-		}
-
-		if err := migrator.Migrate(ctx, db, tpl.config); err != nil {
+		if err := ensureTemplate(ctx, tpl.config, migrator); err != nil {
+			os.Remove(tpl.config.Database)
 			return nil, errtrace.Wrap(err)
 		}
 
 		return &tpl, nil
 	}))
+}
+
+// ensureTemplate creates a template database using the config and migrator. If there
+// was an error during creation it will be returned.
+func ensureTemplate(ctx context.Context, config Config, migrator Migrator) error {
+	db, err := config.Connect()
+	if err != nil {
+		return errtrace.Wrap(err)
+	}
+	defer db.Close()
+
+	// As SQLite doesn't have advisory locks, the best we can do is enable
+	// exclusive [locking-mode], which will prevent reads and writes from other
+	// processes.
+	//
+	// Note that taking the exclusive lock requires a write, so this still allows
+	// migrations which exec another program to succeed.
+	//
+	// This uses [sql.DB.QueryRowContext] instead of [sql.DB.ExecContext] due to libsql
+	// returning an error, instead of non-nil [sql.Result], when Exec is used for any
+	// statements that return rows. See [tursodatabase/go-libsql#28].
+	//
+	// [locking-mode]: https://www.sqlite.org/pragma.html#pragma_locking_mode
+	// [tursodatabase/go-libsql#28]: https://github.com/tursodatabase/go-libsql/issues/28
+	var ignored string
+	row := db.QueryRowContext(ctx, "PRAGMA main.locking_mode=EXCLUSIVE")
+	err = row.Scan(&ignored)
+	if err != nil {
+		return errtrace.Wrap(err)
+	}
+
+	if err := migrator.Migrate(ctx, db, config); err != nil {
+		return errtrace.Wrap(err)
+	}
+
+	return nil
 }
 
 // createInstance creates a new test database by cloning a template.
